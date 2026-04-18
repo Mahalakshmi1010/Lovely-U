@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Surprise Just for You 💕</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --pink: #f48fb1;
+    --deep-pink: #e91e8c;
+    --purple: #ce93d8;
+    --soft-purple: #f3e5f5;
+    --blush: #fce4ec;
+    --lavender: #ede7f6;
+    --text-dark: #4a1942;
+    --text-mid: #7b3f7a;
+  }
+
+  body {
+    font-family: 'Lato', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 50%, #ede7f6 100%);
+  }
+
+  /* ── Floating hearts ── */
+  #hearts-canvas {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Screens ── */
+  .screen {
+    display: none;
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    animation: fadeIn 0.8s ease;
+  }
+  .screen.active { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Card ── */
+  .card {
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(12px);
+    border-radius: 24px;
+    padding: 2.5rem 2rem;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 8px 40px rgba(233,30,140,0.12);
+  }
+
+  /* ── Typography ── */
+  h1 {
+    font-family: 'Dancing Script', cursive;
+    font-size: clamp(2rem, 7vw, 3rem);
+    color: var(--text-dark);
+    margin-bottom: 0.6rem;
+    line-height: 1.2;
+  }
+  h2 {
+    font-family: 'Dancing Script', cursive;
+    font-size: clamp(1.5rem, 5vw, 2.2rem);
+    color: var(--text-dark);
+    margin-bottom: 0.8rem;
+  }
+  p {
+    color: var(--text-mid);
+    font-size: clamp(0.95rem, 3vw, 1.05rem);
+    line-height: 1.7;
+    margin-bottom: 1rem;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-block;
+    margin-top: 1.2rem;
+    padding: 0.85rem 2.2rem;
+    border: none;
+    border-radius: 50px;
+    background: linear-gradient(135deg, #f48fb1, #ce93d8);
+    color: #fff;
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.25rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 18px rgba(244,143,177,0.45);
+  }
+  .btn:hover  { transform: translateY(-3px) scale(1.04); box-shadow: 0 8px 28px rgba(244,143,177,0.55); }
+  .btn:active { transform: scale(0.97); }
+
+  /* ── Password screen ── */
+  #pw-input {
+    width: 100%;
+    padding: 0.8rem 1.2rem;
+    border: 2px solid var(--pink);
+    border-radius: 50px;
+    font-size: 1.1rem;
+    text-align: center;
+    background: rgba(255,255,255,0.8);
+    color: var(--text-dark);
+    outline: none;
+    transition: border-color 0.2s;
+    margin-top: 0.5rem;
+  }
+  #pw-input:focus { border-color: var(--deep-pink); }
+
+  .pw-hint { font-size: 0.85rem; color: #b06090; margin-top: 0.4rem; }
+  #pw-error {
+    color: #e91e8c;
+    font-size: 0.95rem;
+    margin-top: 0.6rem;
+    min-height: 1.4rem;
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.1rem;
+  }
+
+  /* ── Quiz screen ── */
+  .quiz-progress {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 1.4rem;
+  }
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #e0a0c0;
+    transition: background 0.3s;
+  }
+  .dot.done { background: var(--deep-pink); }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    margin-top: 1rem;
+  }
+  .opt-btn {
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--pink);
+    border-radius: 14px;
+    background: rgba(255,255,255,0.7);
+    color: var(--text-dark);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Lato', sans-serif;
+  }
+  .opt-btn:hover  { background: var(--blush); border-color: var(--deep-pink); transform: scale(1.02); }
+  .opt-btn.correct { background: #c8f7d6; border-color: #34a853; color: #1a5c30; }
+  .opt-btn.wrong   { background: #ffd6e0; border-color: #e91e8c; color: #7b0040; }
+
+  #quiz-feedback {
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.3rem;
+    color: var(--deep-pink);
+    min-height: 2rem;
+    margin-top: 0.5rem;
+  }
+
+  /* ── Final screen ── */
+  #final-msg {
+    font-family: 'Lato', sans-serif;
+    font-size: clamp(0.95rem, 3vw, 1.05rem);
+    color: var(--text-mid);
+    line-height: 1.9;
+    text-align: left;
+    margin-bottom: 1.2rem;
+    max-height: 55vh;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  #final-msg::-webkit-scrollbar { width: 4px; }
+  #final-msg::-webkit-scrollbar-thumb { background: var(--pink); border-radius: 4px; }
+
+  .final-sig {
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.6rem;
+    color: var(--deep-pink);
+    display: block;
+    margin-top: 0.8rem;
+  }
+
+  #music-btn {
+    margin-top: 0;
+    margin-right: 0.5rem;
+    background: linear-gradient(135deg, #ce93d8, #f48fb1);
+  }
+
+  /* ── Confetti ── */
+  .confetti-piece {
+    position: fixed;
+    width: 10px; height: 10px;
+    top: -20px;
+    z-index: 999;
+    pointer-events: none;
+    border-radius: 2px;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ── Typewriter cursor ── */
+  .cursor {
+    display: inline-block;
+    width: 2px; height: 1.1em;
+    background: var(--deep-pink);
+    vertical-align: text-bottom;
+    animation: blink 0.7s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ── Emoji decoration ── */
+  .emoji-row { font-size: 2rem; letter-spacing: 0.5rem; margin-bottom: 0.8rem; }
+
+  /* ── Responsive ── */
+  @media (max-width: 420px) {
+    .card { padding: 1.8rem 1.2rem; border-radius: 18px; }
+    #final-msg { max-height: 48vh; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="hearts-canvas"></canvas>
+
+<!-- ══════════════════ SCREEN 1: LANDING ══════════════════ -->
+<div class="screen active" id="screen-1">
+  <div class="card">
+    <div class="emoji-row">💌</div>
+    <h1 id="landing-title"></h1>
+    <p id="landing-sub"></p>
+    <button class="btn" onclick="goTo(2)">Start the Surprise ✨</button>
+  </div>
+</div>
+
+<!-- ══════════════════ SCREEN 2: PASSWORD ══════════════════ -->
+<div class="screen" id="screen-2">
+  <div class="card">
+    <div class="emoji-row">🔐</div>
+    <h2>A little test first…</h2>
+    <p>Enter the password to unlock your surprise.</p>
+    <p class="pw-hint">Hint: our special date (DD-MM-YYYY) <br>If you enter wrongly i will cryy venkyyy </p>
+    <input id="pw-input" type="password" placeholder="Enter password…" autocomplete="off">
+    <div id="pw-error"></div>
+    <button class="btn" onclick="checkPassword()">Unlock 🗝️</button>
+  </div>
+</div>
+
+<!-- ══════════════════ SCREEN 3: QUIZ ══════════════════ -->
+<div class="screen" id="screen-3">
+  <div class="card">
+    <div class="quiz-progress">
+      <div class="dot" id="dot-0"></div>
+      <div class="dot" id="dot-1"></div>
+      <div class="dot" id="dot-2"></div>
+    </div>
+    <h2 id="q-title">Memory Check 💕</h2>
+    <p id="q-text"></p>
+    <div class="options" id="q-options"></div>
+    <div id="quiz-feedback"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ SCREEN 4: FINAL ══════════════════ -->
+<div class="screen" id="screen-4">
+  <div class="card">
+    <div class="emoji-row">💖</div>
+    <h1>For You, My Love</h1>
+    <div id="final-msg"></div>
+    <button class="btn" id="music-btn" onclick="toggleMusic()">🎵 Play Music</button>
+    <button class="btn" onclick="launchConfetti()" style="background:linear-gradient(135deg,#f48fb1,#ffcc80);">🎊 Celebrate!</button>
+    <span class="final-sig">— Always yours 💕</span>
+  </div>
+</div>
+
+<audio id="music" loop>
+  <source src="C:\Users\maha1\Downloads\love\Eppadi Vandhaayo-2-Downringtone.com.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+// ─── CONFIG — customize these! ───────────────────────────
+const PASSWORD = "13-04-2026"; // your real anniversary / special date
+
+const QUESTIONS = [
+  {
+    q: "Where did we first meet? 🌟",
+    options: ["Whatsapp", "Snapchat", "Instagram", "At college"],
+    correct: 1,
+    feedback: "Out of all the random snaps, messages, and people… I found you. And that turned out to be the best thing that ever happened to me 😍"
+  },
+  {
+    q: "When did we start talking non-stop? 📱",
+  options: ["One random day", "After first chat", "Late night conversations", "I don't remember 😜"],
+  correct: 2,
+  feedback: "Those late night talks became my favorite part of every day 🌙❤️"
+  },
+  {
+  q: "What is my favorite memory of us? 📸",
+  options: ["Our first chat", "Our deep talks", "Our funny moments", "All of them"],
+  correct: 3,
+  feedback: "Every moment with you is my favorite memory 🥰"
+},
+  {
+    q: "What's my favorite thing about you? 💫",
+    options: ["Your laugh", "Your care", "Your smile", "Everything"],
+    correct: 3,
+    feedback: "It really is everything. Every single thing about you. 💞"
+  }
+];
+
+const LOVE_NOTE = `Every morning I wake up smiling, thinking about how it all started on Snapchat — how I used to ignore your messages, and somehow you were patient enough to wait until I finally replied. That small moment changed everything.
+You are the person who turned a simple chat into the most beautiful story I never expected. From being strangers on a screen to late-night talks about everything and nothing — I still can't believe how far we've come.
+I love the way you held on even when I was pushing away. I love how that one night changed something in you, and how you were brave enough to tell me. I love that you waited a whole week after proposing, never pressuring me — even though, honestly, I already knew my answer the moment you asked. I just wasn't ready to say it out loud yet. Proposing to you myself was the best thing I ever did.
+And then came 13th April 2026. I planned that surprise meet in Trichy with a heart full of nerves and love, and seeing you in real life for the first time made me so shy I didn't know what to do with myself. But it also made everything more real, more certain, more ours. That day made my love for you stronger than I knew was possible.
+I don't have perfect words, but I have this truth — you are my favorite person. The one I kept making wait, the one I surprised, the one who makes me shy even now. Today, tomorrow, and every day I'm lucky enough to call you mine.
+I need this forever. And I mean it. 💕
+
+Thank you for being mine. 🌹`;
+// ──────────────────────────────────────────────────────────
+
+// ── Navigation ────────────────────────────────────────────
+function goTo(n) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + n).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── Screen 1: Typewriter ──────────────────────────────────
+function typewrite(el, text, speed, cb) {
+  let i = 0;
+  el.innerHTML = '';
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+  el.appendChild(cursor);
+  const iv = setInterval(() => {
+    el.insertBefore(document.createTextNode(text[i++]), cursor);
+    if (i === text.length) {
+      clearInterval(iv);
+      setTimeout(() => { cursor.remove(); if (cb) cb(); }, 600);
+    }
+  }, speed);
+}
+
+window.addEventListener('load', () => {
+  typewrite(document.getElementById('landing-title'), 'Hey ❤️ I made something special for you Venkyyyy…', 60, () => {
+    typewrite(document.getElementById('landing-sub'), 'Press the button below and let the magic begin.', 40);
+  });
+  startFloatingHearts();
+});
+
+// ── Screen 2: Password ────────────────────────────────────
+document.getElementById('pw-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPassword();
+});
+
+function checkPassword() {
+  const val = document.getElementById('pw-input').value.trim();
+  const err = document.getElementById('pw-error');
+  if (val === PASSWORD) {
+    err.textContent = '';
+    goTo(3);
+    loadQuestion(0);
+  } else {
+    err.textContent = 'Oops! Try again baby 😜';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').classList.add('shake');
+    setTimeout(() => document.getElementById('pw-input').classList.remove('shake'), 500);
+  }
+}
+
+// ── Screen 3: Quiz ────────────────────────────────────────
+let currentQ = 0;
+
+function loadQuestion(idx) {
+  const q = QUESTIONS[idx];
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('quiz-feedback').textContent = '';
+  const opts = document.getElementById('q-options');
+  opts.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = opt;
+    btn.onclick = () => answerQuestion(i, idx);
+    opts.appendChild(btn);
+  });
+  for (let d = 0; d < 3; d++) {
+    document.getElementById('dot-' + d).classList.toggle('done', d < idx);
+  }
+}
+
+function answerQuestion(chosen, idx) {
+  const q = QUESTIONS[idx];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+  btns[chosen].classList.add(chosen === q.correct ? 'correct' : 'wrong');
+  if (chosen !== q.correct) btns[q.correct].classList.add('correct');
+  document.getElementById('quiz-feedback').textContent = q.feedback;
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < QUESTIONS.length) {
+      loadQuestion(currentQ);
+    } else {
+      goTo(4);
+      startFinalScreen();
+    }
+  }, 1800);
+}
+
+// ── Screen 4: Final ───────────────────────────────────────
+function startFinalScreen() {
+  const el = document.getElementById('final-msg');
+  const paras = LOVE_NOTE.split('\n\n');
+  el.innerHTML = '';
+  let pi = 0;
+  function nextPara() {
+    if (pi >= paras.length) { launchConfetti(); return; }
+    const p = document.createElement('p');
+    el.appendChild(p);
+    typewrite(p, paras[pi++], 30, () => setTimeout(nextPara, 300));
+    el.scrollTop = el.scrollHeight;
+  }
+  nextPara();
+}
+
+// ── Music ─────────────────────────────────────────────────
+let musicPlaying = false;
+function toggleMusic() {
+  const audio = document.getElementById('music');
+  const btn = document.getElementById('music-btn');
+  if (musicPlaying) {
+    audio.pause();
+    btn.textContent = '🎵 Play Music';
+    musicPlaying = false;
+  } else {
+    audio.play().catch(() => {});
+    btn.textContent = '🎵 Pause Music';
+    musicPlaying = true;
+  }
+}
+
+// ── Confetti ──────────────────────────────────────────────
+function launchConfetti() {
+  const colors = ['#f48fb1','#ce93d8','#ffcc80','#80deea','#ef9a9a','#fff176'];
+  for (let i = 0; i < 120; i++) {
+    setTimeout(() => {
+      const c = document.createElement('div');
+      c.className = 'confetti-piece';
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.width = (6 + Math.random() * 8) + 'px';
+      c.style.height = (6 + Math.random() * 8) + 'px';
+      c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      const dur = 2.5 + Math.random() * 2;
+      c.style.animationDuration = dur + 's';
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), dur * 1000);
+    }, i * 30);
+  }
+}
+
+// ── Floating Hearts Canvas ─────────────────────────────────
+function startFloatingHearts() {
+  const canvas = document.getElementById('hearts-canvas');
+  const ctx = canvas.getContext('2d');
+  let hearts = [];
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function heartPath(ctx, x, y, size) {
+    ctx.beginPath();
+    ctx.moveTo(x, y + size * 0.3);
+    ctx.bezierCurveTo(x, y, x - size * 0.5, y, x - size * 0.5, y + size * 0.3);
+    ctx.bezierCurveTo(x - size * 0.5, y + size * 0.65, x, y + size * 0.9, x, y + size);
+    ctx.bezierCurveTo(x, y + size * 0.9, x + size * 0.5, y + size * 0.65, x + size * 0.5, y + size * 0.3);
+    ctx.bezierCurveTo(x + size * 0.5, y, x, y, x, y + size * 0.3);
+    ctx.closePath();
+  }
+
+  function spawnHeart() {
+    hearts.push({
+      x: Math.random() * canvas.width,
+      y: canvas.height + 20,
+      size: 8 + Math.random() * 20,
+      speed: 0.4 + Math.random() * 0.8,
+      alpha: 0.15 + Math.random() * 0.35,
+      drift: (Math.random() - 0.5) * 0.5,
+      hue: 330 + Math.random() * 60
+    });
+  }
+
+  setInterval(spawnHeart, 600);
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    hearts = hearts.filter(h => h.y > -40);
+    hearts.forEach(h => {
+      h.y -= h.speed;
+      h.x += h.drift;
+      ctx.save();
+      ctx.globalAlpha = h.alpha;
+      ctx.fillStyle = `hsl(${h.hue},80%,70%)`;
+      heartPath(ctx, h.x - h.size / 2, h.y - h.size, h.size);
+      ctx.fill();
+      ctx.restore();
+    });
+    requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+// ── Shake animation for wrong password ───────────────────
+const style = document.createElement('style');
+style.textContent = `
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  60% { transform: translateX(-8px); }
+  80% { transform: translateX(8px); }
+}
+.shake { animation: shake 0.45s ease; }`;
+document.head.appendChild(style);
+</script>
+</body>
+</html>
